@@ -8,8 +8,9 @@ import (
 )
 
 type ClientType struct {
-	logger go_logger.InterfaceLogger
-	apiKey string
+	logger  go_logger.InterfaceLogger
+	apiKey  string
+	timeout time.Duration
 }
 
 type DataType string
@@ -40,11 +41,20 @@ const (
 
 const BASE_URL = "https://www.alphavantage.co/query"
 
-func NewClient(logger go_logger.InterfaceLogger, apiKey string) *ClientType {
+func NewClient(
+	logger go_logger.InterfaceLogger,
+	apiKey string,
+) *ClientType {
 	return &ClientType{
-		logger: logger,
-		apiKey: apiKey,
+		logger:  logger,
+		apiKey:  apiKey,
+		timeout: 10 * time.Second,
 	}
+}
+
+func (c *ClientType) SetTimeout(timeout time.Duration) *ClientType {
+	c.timeout = timeout
+	return c
 }
 
 type TreasuryYieldParams struct {
@@ -83,7 +93,7 @@ func (c *ClientType) RequestForStruct(
 	paramsMap["apikey"] = c.apiKey
 
 	_, _, err := go_http.NewHttpRequester(
-		go_http.WithTimeout(5*time.Second),
+		go_http.WithTimeout(c.timeout),
 		go_http.WithLogger(c.logger),
 	).GetForStruct(
 		go_http.RequestParam{
